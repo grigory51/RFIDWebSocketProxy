@@ -1,9 +1,9 @@
-﻿using System.Text;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
+using System.Text;
 
 //thank http://www.codeproject.com/Articles/1966/An-INI-file-handling-class-using-C
 
-namespace Ini {
+namespace RFIDWSProxy.Utils {
     /// <summary>
     /// Create a New INI file to store or load data
     /// </summary>
