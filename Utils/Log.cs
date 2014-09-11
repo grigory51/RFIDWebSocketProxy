@@ -25,5 +25,9 @@ namespace RFIDWSProxy.Utils {
                 } catch { }
             }
         }
+
+        public static void Write(Exception e) {
+            Log.Write(e.Message);
+        }
     }
 }
