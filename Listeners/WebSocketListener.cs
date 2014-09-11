@@ -4,9 +4,10 @@ using RFIDWSProxy.Utils;
 using System;
 using System.Collections.Concurrent;
 using System.Net;
+using System.Threading;
 
-namespace RFIDWSProxy {
-    class WebSocketListener {
+namespace RFIDWSProxy.Listeners {
+    class WebSocketListener : IListener {
         private ConcurrentDictionary<EndPoint, UserContext> connectionPull;
         private WebSocketServer listener;
 
@@ -16,15 +17,16 @@ namespace RFIDWSProxy {
             this.listener = new WebSocketServer(Settings.instance().WebsocketListenPort, IPAddress.Any) {
                 OnConnected = this.OnConnected,
                 OnDisconnect = this.OnDisconnect,
-                TimeOut = new TimeSpan(0, 5, 0)
+                TimeOut = TimeSpan.MaxValue,
+                FlashAccessPolicyEnabled = false
             };
         }
 
-        public void Start() {
+        public void StartListen() {
             listener.Start();
         }
 
-        public void Stop() {
+        public void StopListen() {
             listener.Stop();
         }
 
