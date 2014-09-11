@@ -1,4 +1,5 @@
 ﻿using Alchemy.Classes;
+using RFIDWSProxy.Listeners;
 using RFIDWSProxy.Utils;
 using System;
 using System.Collections.Concurrent;
@@ -20,26 +21,32 @@ namespace RFIDWSProxy {
         }
 
         protected override void OnStart(string[] args) {
+            AppDomain.CurrentDomain.UnhandledException += RFIDService.UnhandledException;
             CommandLine.Parser.Default.ParseArguments(args, Settings.instance());
 
-            this.websocketListener = new WebSocketListener(ref clientsPool);
-            this.rfidListener = new RFIDListener(Settings.instance().ReaderPortType, Settings.instance().ReaderPortName);
+            try {
+                this.websocketListener = new WebSocketListener(ref clientsPool);
+                this.rfidListener = new RFIDListener(Settings.instance().ReaderPortType, Settings.instance().ReaderPortName, this.CardDetectCallback);
 
-            this.websocketListener.Start();
-
-            this.rfidListener.PlaceCardCallback = this.CardDetectCallback;
-            this.rfidListener.Open();
-            this.rfidListener.StartListen();
+                this.websocketListener.StartListen();
+                this.rfidListener.StartListen();
+            } catch (Exception e) {
+                Log.Write(e);
+                this.OnStop();
+            }
         }
 
         protected override void OnStop() {
-            this.websocketListener.Stop();
-            this.rfidListener.Destroy();
+            try {
+                this.websocketListener.StopListen();
+                this.rfidListener.StopListen();
+            } catch (Exception e) {
+                Log.Write(e);
+            }
         }
 
         static void Main(string[] args) {
             RFIDService service = new RFIDService();
-
             if (Environment.UserInteractive) {
                 service.OnStart(args);
                 Console.WriteLine("Press any key to stop program");
@@ -48,6 +55,11 @@ namespace RFIDWSProxy {
             } else {
                 ServiceBase.Run(service);
             }
+        }
+
+        static void UnhandledException(object sender, UnhandledExceptionEventArgs e) {
+            Log.Write((Exception)e.ExceptionObject);
+            Environment.Exit(1);
         }
 
         bool CardDetectCallback(UInt32 nMsg, IntPtr nMsgParam, IntPtr pUserData) {
